@@ -1,0 +1,37 @@
+**
+# VCS
+.git
+.gitignore
+
+# IDE
+.idea
+*.iml
+
+# Build outputs and caches
+.gradle
+build
+out
+dist
+tmp
+.cache
+.gradle-cache
+
+# Python artifacts
+__pycache__
+*.pyc
+
+# Node modules (if present)
+node_modules
+helper
+
+!gradlew
+!gradlew.bat
+!gradle/wrapper/gradle-wrapper.properties
+
+!build.gradle
+!gradle.properties
+!settings.gradle
+
+!bridge.py
+
+!web

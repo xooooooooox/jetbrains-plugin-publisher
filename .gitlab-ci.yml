@@ -1,0 +1,71 @@
+spec:
+  inputs:
+    version_type:
+      type: string
+      default: 'minor'
+    runner_tags:
+      type: string
+      default: 'shell-arm64'
+
+---
+stages:
+  - prepare
+  - publish
+  - release
+
+include:
+  - project: coding/homelab/gitlab-ci-templates
+    ref: feat/1.24.1
+    file: templates/stage/prepare/default.yml
+    inputs:
+      version_type: $[[ inputs.version_type ]]
+      runner_tags: $[[ inputs.runner_tags ]]
+  - project: coding/homelab/gitlab-ci-templates
+    ref: feat/1.24.1
+    file: templates/stage/publish/const.yml
+  - project: coding/homelab/gitlab-ci-templates
+    ref: feat/1.24.1
+    file: templates/stage/publish/config.yml
+  - project: coding/homelab/gitlab-ci-templates
+    ref: feat/1.24.1
+    file: templates/stage/publish/jobs.yml
+  - project: coding/homelab/gitlab-ci-templates
+    ref: feat/1.24.1
+    file: templates/stage/release/default.yml
+
+variables:
+  TP_PREPARE_SCRIPT_REF: feat/1.24.1
+  TP_PREPARE_SCRIPT_REF_TYPE: branch
+  # job trigger
+  TP_RUN_RELEASE: 'true'
+  # workflow
+  TP_PREPARE_WORKFLOW_RULE_BRANCHES_PUSH: '/^(main)$/'
+  TP_WORKFLOW_RULE_BRANCHES_RELEASE: '/^(main)$/'
+  # release
+  TP_RELEASE_RUNNER_TAGS: $[[ inputs.runner_tags ]]
+  TP_RELEASE_TAG_PREFIX: v
+  TP_RELEASE_TAG_SEARCH: $TP_RELEASE_TAG_PREFIX
+
+publish_image:
+  stage: publish
+  extends: .buildx:dind:socket
+  variables:
+    TP_PUBLISH_DOCKER_REGISTRIES: $DF_PUBLISH_DOCKER_REGISTRIES
+    TP_PUBLISH_DOCKER_REGISTRY_USERNAMES: $DF_PUBLISH_DOCKER_REGISTRY_USERNAMES
+    TP_PUBLISH_DOCKER_REGISTRY_PASSWORDS: $DF_PUBLISH_DOCKER_REGISTRY_PASSWORDS
+    TP_PUBLISH_DOCKER_BUILD_IMAGE_NAMESPACES: $DF_PUBLISH_DOCKER_BUILD_IMAGE_NAMESPACES
+    # Docker build
+    TP_PUBLISH_DOCKER_BUILD_CONTEXT_DIR: .
+    TP_PUBLISH_DOCKER_DOCKERFILE: ./Dockerfile
+    TP_PUBLISH_DOCKER_BUILD_IMAGE_REPOSITORY: $CI_PROJECT_NAME
+    TP_PUBLISH_DOCKER_BUILD_ARGS: "BUILD_DATE=$CI_PIPELINE_CREATED_AT,VCS_REF=$CI_COMMIT_SHORT_SHA,VERSION=$CI_COMMIT_TAG"
+  rules:
+    - if: $CI_COMMIT_BRANCH =~ $TP_PREPARE_WORKFLOW_RULE_BRANCHES_PUSH
+      changes:
+        - .gitlab-ci.yml
+        - Dockerfile
+        - web/**
+        - build.gradle
+        - bridge.py
+      when: on_success
+    - when: never

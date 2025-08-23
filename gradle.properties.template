@@ -1,0 +1,11 @@
+# --- Jetbrains plugin publisher defaults ---
+publisher.repo=artifactory
+publisher.baseUrl=https://artifactory.example.com/artifactory/jetbrains-plugin-local
+publisher.downloadUrlPrefix=https://artifactory.example.com/artifactory/jetbrains-plugin-local
+publisher.xmlName=updatePlugins.xml
+
+# Authentication (pick one)
+# 1) used as Bearer token(Access Token)
+# publisher.token=**************
+# 2) Basic auth (rarely needed)
+# publisher.basic=myuser:my_pass

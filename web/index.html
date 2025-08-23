@@ -1,0 +1,1471 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8"/>
+    <title>Jetbrains Plugin Publisher</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- SVG sprite (icons) -->
+    <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0"
+         style="position:absolute;left:-9999px;visibility:hidden">
+        <symbol id="i-play" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8 5v14l11-7z"/>
+        </symbol>
+        <symbol id="i-trash" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M6 7h12l-1 14H7L6 7zm3-3h6l1 2H8l1-2z"/>
+        </symbol>
+        <symbol id="i-minus-square" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5zm5 7h8v2H8v-2z"/>
+        </symbol>
+        <symbol id="i-file" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <path d="M14 2v6h6"/>
+        </symbol>
+        <symbol id="i-eye" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 5C7 5 2.73 8.11 1 12c1.73 3.89 6 7 11 7s9.27-3.11 11-7c-1.73-3.89-6-7-11-7Zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10Z"/>
+        </symbol>
+        <symbol id="i-info" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M11 7h2v2h-2V7zm0 4h2v6h-2v-6z"/>
+        </symbol>
+        <symbol id="i-check" viewBox="0 0 24 24" fill="currentColor">
+            <path d="m9 16.17-3.88-3.88-1.42 1.41L9 19 20.3 7.71l-1.41-1.41z"/>
+        </symbol>
+    </svg>
+
+    <style>
+        :root {
+            --bg: #0b1020;
+            --fg: #e6edf3;
+            --muted: #9aa4b2;
+            --card: #0f172a;
+            --line: #263146;
+            --brand: #3b82f6;
+            --ok: #22c55e;
+            --warn: #f59e0b;
+            --err: #ef4444;
+            --run: #60a5fa;
+            --placeholder: #a6b2c6;
+            --hint-bg: #0b1220
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--fg);
+            font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+            margin: 0
+        }
+
+        /* Typography hierarchy */
+        h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: .2px
+        }
+
+        h2 {
+            font-size: 16px;
+            font-weight: 700;
+            margin: 0 0 12px
+        }
+
+        .text-muted {
+            color: var(--muted)
+        }
+
+        .hint {
+            font-size: 12.25px;
+            color: #cfd7e3
+        }
+
+        .placeholder-contrast {
+            color: var(--placeholder)
+        }
+
+        .wrap {
+            max-width: 1280px;
+            margin: 28px auto;
+            padding: 0 18px
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px
+        }
+
+        .select {
+            appearance: none;
+            background: #0b1220;
+            border: 1px solid var(--line);
+            color: var(--fg);
+            padding: .45rem .7rem;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600
+        }
+
+        .visually-hidden {
+            position: absolute !important;
+            height: 1px;
+            width: 1px;
+            overflow: hidden;
+            clip: rect(1px, 1px, 1px, 1px);
+            white-space: nowrap
+        }
+
+        .grid {
+            display: grid;
+            gap: 18px
+        }
+
+        @media (min-width: 980px) {
+            .grid-2 {
+                grid-template-columns:minmax(0, 1fr) minmax(0, 1fr)
+            }
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 16px;
+            position: relative
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns:minmax(0, 1fr) minmax(0, 1fr);
+            gap: 12px
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px
+        }
+
+        .field label {
+            color: var(--muted);
+            font-size: 12.5px;
+            font-weight: 600
+        }
+
+        .row-flex {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap
+        }
+
+        /* Inputs — clear legibility; placeholders differentiated (italic + lighter) */
+        .input-like {
+            width: 100%;
+            background: #0b1220;
+            color: var(--fg);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: .65rem .75rem;
+            font-size: 14.5px;
+            line-height: 1.35;
+            letter-spacing: .1px
+        }
+
+        .input-like::placeholder {
+            color: var(--placeholder);
+            opacity: .95;
+            font-style: italic
+        }
+
+        .input-like:focus {
+            outline: 2px solid rgba(59, 130, 246, .7);
+            outline-offset: 0;
+            border-color: #3b82f6
+        }
+
+        .input-like:disabled {
+            opacity: .85;
+            color: #b7c1d2
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: .5rem;
+            padding: .65rem 1.05rem;
+            border-radius: 12px;
+            border: 1px solid var(--line);
+            cursor: pointer;
+            font-weight: 700;
+            background: transparent;
+            color: var(--fg)
+        }
+
+        .btn-primary {
+            background: var(--brand);
+            color: #fff;
+            border: 0
+        }
+
+        .btn-danger {
+            border-color: #7f1d1d;
+            color: #fecaca
+        }
+
+        .btn:disabled {
+            opacity: .6;
+            cursor: not-allowed
+        }
+
+        .btn-sm {
+            padding: .4rem .6rem;
+            border-radius: 10px;
+            font-size: 12px
+        }
+
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            padding: 0
+        }
+
+        .icon {
+            width: 16px;
+            height: 16px;
+            display: inline-block
+        }
+
+        /* Tooltip trigger — clean ⓘ icon (no circles) */
+        .tip {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 8px;
+            background: rgba(59, 130, 246, .10);
+            border: 1px solid rgba(59, 130, 246, .25);
+            color: #cfe1ff;
+            cursor: help;
+            user-select: none
+        }
+
+        .tip svg {
+            width: 14px;
+            height: 14px
+        }
+
+        .tip:hover {
+            background: rgba(59, 130, 246, .18);
+            border-color: #4b7be9
+        }
+
+        /* Tooltip bubble */
+        .tooltip {
+            position: fixed;
+            z-index: 9999;
+            display: none;
+            max-width: 520px;
+            background: #0c1630;
+            color: var(--fg);
+            border: 1px solid var(--line);
+            padding: .5rem .65rem;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .45);
+            font-size: 12.5px;
+            line-height: 1.35
+        }
+
+        .tooltip::after {
+            content: "";
+            position: absolute;
+            left: 10px;
+            top: -6px;
+            width: 10px;
+            height: 10px;
+            background: #0c1630;
+            transform: rotate(45deg);
+            border-left: 1px solid var(--line);
+            border-top: 1px solid var(--line)
+        }
+
+        /* Table */
+        .table-scroll {
+            margin-top: 12px;
+            overflow: auto;
+            -webkit-overflow-scrolling: touch
+        }
+
+        table {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: separate;
+            border-spacing: 0;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            overflow: hidden;
+            min-width: 980px
+        }
+
+        thead th {
+            position: sticky;
+            top: 0;
+            background: #0c1630;
+            color: #cbd5e1;
+            font-size: 12px;
+            text-align: left;
+            padding: 8px;
+            border-bottom: 1px solid var(--line)
+        }
+
+        tbody td {
+            padding: 8px;
+            border-bottom: 1px solid var(--line);
+            vertical-align: middle
+        }
+
+        tbody tr:nth-child(even) {
+            background: #0b1222
+        }
+
+        .th-center, .td-center {
+            text-align: center
+        }
+
+        .progress {
+            position: relative;
+            height: 10px;
+            background: #0b1220;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            overflow: hidden
+        }
+
+        .bar {
+            height: 100%;
+            width: 0;
+            background: var(--brand);
+            transition: width .15s linear
+        }
+
+        .pct {
+            position: absolute;
+            right: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 11px;
+            color: #cbd5e1
+        }
+
+        .status {
+            font-size: 12px;
+            padding: .25rem .5rem;
+            border-radius: 999px;
+            display: inline-block;
+            white-space: nowrap
+        }
+
+        .s-pending {
+            background: #0b1220;
+            color: #cbd5e1;
+            border: 1px solid var(--line)
+        }
+
+        .s-running {
+            background: #0b1220;
+            color: var(--run);
+            border: 1px solid #1d4ed8
+        }
+
+        .s-ok {
+            background: #052e1a;
+            color: var(--ok);
+            border: 1px solid #14532d
+        }
+
+        .s-warn {
+            background: #2f2206;
+            color: var(--warn);
+            border: 1px solid #8a6d1a
+        }
+
+        .s-fail {
+            background: #3b0a0a;
+            color: var(--err);
+            border: 1px solid #7f1d1d
+        }
+
+        .log {
+            background: #050814;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 12px;
+            max-height: 360px;
+            overflow: auto;
+            white-space: pre-wrap;
+            font-family: ui-monospace, Menlo, monospace;
+            font-size: 12.5px
+        }
+
+        /* Ellipsis for long file names / paths */
+        .file-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0
+        }
+
+        .ellipsize {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap
+        }
+
+        .file-ico {
+            color: #cbd5e1;
+            flex: none
+        }
+
+        /* Auth defaults ON/OFF visuals */
+        .masked {
+            position: relative;
+            opacity: .65
+        }
+
+        .masked::after {
+            content: attr(data-mask);
+            position: absolute;
+            right: 12px;
+            top: 12px;
+            background: #0c1630;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            padding: .15rem .5rem;
+            font-size: 11px;
+            color: #cbd5e1
+        }
+
+        .state-pill {
+            position: absolute;
+            right: 14px;
+            top: 14px;
+            font-size: 11px;
+            padding: .2rem .55rem;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: #0c1630;
+            color: #cbd5e1
+        }
+
+        .repo-on {
+            box-shadow: 0 0 0 1px rgba(59, 130, 246, .6) inset, 0 0 0 2px rgba(59, 130, 246, .15);
+            border-color: #3b82f680
+        }
+
+        .pill-on {
+            background: #1d2a49;
+            color: #cfe1ff;
+            border-color: #3b82f6
+        }
+
+        .pill-off {
+            background: #1f2937;
+            color: #cbd5e1;
+            border-color: #374151
+        }
+
+        /* Responsive tweaks */
+        @media (max-width: 980px) {
+            .wrap {
+                padding: 0 12px
+            }
+
+            header {
+                flex-wrap: wrap;
+                gap: 10px
+            }
+
+            .form-grid {
+                grid-template-columns:minmax(0, 1fr)
+            }
+        }
+
+        @media (max-width: 640px) {
+            h1 {
+                font-size: 22px
+            }
+
+            .btn {
+                padding: .55rem .85rem
+            }
+        }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+</head>
+<body>
+<div class="wrap container mx-auto px-4 md:px-6">
+    <header>
+        <h1 id="title">Jetbrains Plugin Publisher</h1>
+        <div class="flex items-center gap-2">
+            <label for="langSelect" class="visually-hidden">Language</label>
+            <select id="langSelect" class="select">
+                <option value="zh">中</option>
+                <option value="en">En</option>
+            </select>
+        </div>
+    </header>
+
+    <div class="grid grid-2 grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="card">
+            <h2 id="sec-mode">模式</h2>
+            <div class="row-flex">
+                <label class="flex items-center gap-2">
+                    <input type="radio" name="mode" id="modeBridge" checked>
+                    <span id="mode-bridge-label">Bridge</span>
+                    <!-- clean info trigger (ⓘ) -->
+                    <button type="button" class="tip" id="tip-mode-bridge" data-tip="Bridge（推荐：容器已启，无需 CORS）"
+                            aria-label="Bridge info">
+                        <svg class="icon">
+                            <use href="#i-info"/>
+                        </svg>
+                    </button>
+                </label>
+                <label class="flex items-center gap-2">
+                    <input type="radio" name="mode" id="modeDirect">
+                    <span id="mode-direct-label">Direct</span>
+                    <button type="button" class="tip" id="tip-mode-direct"
+                            data-tip="直接上传到 Artifactory（需要 CORS 允许 PUT+Authorization）"
+                            aria-label="Direct info">
+                        <svg class="icon">
+                            <use href="#i-info"/>
+                        </svg>
+                    </button>
+                </label>
+            </div>
+
+            <div class="form-grid mt-3" id="bridgeCfg">
+                <div class="field">
+                    <label id="lab-bridge-url">Bridge 地址</label>
+                    <!-- requirement #2: move default into placeholder -->
+                    <div class="flex items-center gap-2">
+                        <input id="bridgeUrl" class="input-like placeholder-contrast" value="" placeholder="">
+                        <button type="button" class="tip" id="tip-bridge-hint"
+                                data-tip="Bridge 模式：仓库与认证信息可省略（容器提供）；如需覆盖，可在右侧启用 Override。"
+                                aria-label="Bridge hint">
+                            <svg class="icon">
+                                <use href="#i-info"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" id="repoCard">
+            <h2 id="sec-repo">仓库 & 认证</h2>
+            <div id="authStatePill" class="state-pill pill-off">Defaults active</div>
+
+            <div class="row-flex mb-2">
+                <label class="row-flex"><input type="checkbox" id="overrideBridge">
+                    <span id="lab-override">自定义</span></label>
+                <button type="button" class="tip" id="tip-override" aria-label="Override hint">
+                    <svg class="icon">
+                        <use href="#i-info"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="form-grid" id="repoForm">
+                <div class="field"><label id="lab-base">Base URL（Artifactory 根）</label><input id="baseUrl"
+                                                                                               class="input-like"
+                                                                                               type="url"
+                                                                                               placeholder="https://artifactory.example.com/artifactory/jetbrains-plugin-local">
+                </div>
+                <div class="field"><label id="lab-dl">Download URL Prefix（IDE 下载前缀）</label><input
+                        id="downloadPrefix" class="input-like" type="url"
+                        placeholder="https://artifactory.example.com/artifactory/jetbrains-plugin-local"></div>
+                <div class="field"><label id="lab-xml">Feed 文件名</label><input id="xmlName" class="input-like"
+                                                                                 value="updatePlugins.xml"></div>
+                <div class="field"><label id="lab-auth-type">Auth 类型</label><select id="authType" class="input-like">
+                    <option>Bearer</option>
+                    <option>Basic</option>
+                </select></div>
+                <div class="field">
+                    <label id="lab-token">Token / user:pass</label>
+                    <div class="row-flex">
+                        <input id="authValue" class="input-like" type="password" style="flex:1"
+                               placeholder="Bearer token 或 user:pass">
+                        <button class="btn btn-icon" id="togglePwd" aria-label="Show/Hide" data-tip="显示/隐藏">
+                            <svg class="icon">
+                                <use href="#i-eye"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="field"><label>&nbsp;</label><label class="row-flex"><input id="rememberToken"
+                                                                                       type="checkbox"> <span
+                        class="text-muted" id="lab-remember">记住 token</span></label></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <h2 id="sec-pick">选择插件（支持多选或选择目录）</h2>
+        <div class="row-flex">
+            <input id="picker" type="file" multiple webkitdirectory directory accept=".jar,.zip">
+            <button type="button" class="tip" id="hint-pick"
+                    data-tip="建议：把所有插件打包放在一个目录中，直接选择该目录。" aria-label="Pick hint">
+                <svg class="icon">
+                    <use href="#i-info"/>
+                </svg>
+            </button>
+        </div>
+        <div class="row-flex mt-2">
+            <button type="button" class="tip" id="hint-folder" data-tip="文件夹列默认取 pluginId，可逐行修改。"
+                    aria-label="Folder hint">
+                <svg class="icon">
+                    <use href="#i-info"/>
+                </svg>
+            </button>
+            <span class="text-muted" id="muted-defaults">默认:</span>
+            <span class="text-muted" id="def-since">since-build</span><input id="defaultSince" class="input-like"
+                                                                             style="width:110px" value="241">
+            <span class="text-muted" id="def-until">until-build</span><input id="defaultUntil" class="input-like"
+                                                                             style="width:150px"
+                                                                             placeholder="可空 251.*">
+            <button class="btn btn-icon" id="applyDefaults" aria-label="Apply to all" data-tip="应用到所有行">
+                <svg class="icon">
+                    <use href="#i-check"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="row-flex justify-between">
+            <div style="min-width:280px">
+                <div class="progress">
+                    <div id="pbarAll" class="bar"></div>
+                    <span class="pct" id="pbarAllPct">0%</span></div>
+                <div class="text-muted" id="overallText" style="margin-top:4px">未开始</div>
+            </div>
+            <div class="row-flex">
+                <label class="row-flex" title="Protect artifacts from accidental overwrite"><input type="checkbox"
+                                                                                                   id="noOverwrite"
+                                                                                                   checked> <span
+                        id="lab-no-overwrite">禁止覆盖已存在的插件（推荐）</span></label>
+                <button class="btn btn-primary btn-icon" id="startBtn" aria-label="Start upload" data-tip="开始上传">
+                    <svg class="icon">
+                        <use href="#i-play"/>
+                    </svg>
+                </button>
+                <button class="btn btn-icon" id="removeSelectedBtn" aria-label="Remove selected" data-tip="移除所选">
+                    <svg class="icon">
+                        <use href="#i-minus-square"/>
+                    </svg>
+                </button>
+                <!-- requirement #4: standard trash icon for log/table clear is already used below; here keep clear table -->
+                <button class="btn btn-icon" id="clearBtn" aria-label="Clear table" data-tip="清空表格">
+                    <svg class="icon">
+                        <use href="#i-trash"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="table-scroll overflow-x-auto">
+            <table id="tbl">
+                <colgroup>
+                    <col style="width:3%">
+                    <col style="width:21%">
+                    <col style="width:12%">
+                    <col style="width:10%">
+                    <col style="width:8%">
+                    <col style="width:12%">
+                    <col style="width:15%">
+                    <col style="width:7%">
+                    <col style="width:8%">
+                    <col style="width:4%">
+                </colgroup>
+                <thead>
+                <tr>
+                    <th class="th-center"><input type="checkbox" id="selAll" class="chk" title="Select all"></th>
+                    <th id="th-file">文件</th>
+                    <th id="th-id">Plugin ID</th>
+                    <th id="th-ver">Version</th>
+                    <th id="th-since">since</th>
+                    <th id="th-until">until</th>
+                    <th id="th-folder">文件夹（目标路径）</th>
+                    <th id="th-status">状态</th>
+                    <th id="th-progress">进度</th>
+                    <th id="th-actions">操作</th>
+                </tr>
+                </thead>
+                <tbody id="tbody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="row-flex justify-between mb-2">
+            <h2 id="sec-log" class="m-0">日志 / Log</h2>
+            <!-- requirement #4: trash-bin icon for clear logs -->
+            <button class="btn btn-danger btn-icon" id="clearLogBtn" aria-label="Clear logs" data-tip="清空日志">
+                <svg class="icon">
+                    <use href="#i-trash"/>
+                </svg>
+            </button>
+        </div>
+        <div class="log" id="log"></div>
+    </div>
+</div>
+
+<!-- Tooltip bubble -->
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+    // ===== i18n =====
+    const i18n = {
+        zh: {
+            title: 'Jetbrains Plugin Publisher',
+            mode: '模式',
+            modeBridge: 'Bridge（推荐：容器已启，无需 CORS）',
+            modeDirect: '直接上传到 Artifactory（需要 CORS 允许 PUT+Authorization）',
+            modeBridgeShort: 'Bridge',
+            modeDirectShort: 'Direct',
+            bridgeUrl: 'Bridge 地址',
+            bridgeHint: 'Bridge 模式：仓库与认证信息可省略（容器提供）；如需覆盖，可在右侧启用 Override。',
+            repo: '仓库 & 认证',
+            override: '自定义',
+            overrideTip: '（未勾选时将禁用下方输入，使用容器环境）',
+            maskText: '使用容器配置',
+            base: 'Base URL（Artifactory repository）',
+            dl: 'Download URL Prefix（IDE 下载前缀）',
+            xml: 'Feed 文件名',
+            authType: 'Auth 类型',
+            token: 'Token / user:pass',
+            remember: '记住 token',
+            pick: '选择插件（支持多选或选择目录）',
+            pickHint: '建议：把所有插件打包放在一个目录中，直接选择该目录。',
+            folderHint: '文件夹列默认取 pluginId，可逐行修改。',
+            defaults: '默认:',
+            defSince: 'since-build',
+            defUntil: 'until-build',
+            applyAll: '应用到所有行',
+            start: '开始上传',
+            clear: '清空表格',
+            clearLog: '清空日志',
+            removeSelected: '移除所选',
+            notStarted: '未开始',
+            working: '进行中…',
+            done: '完成',
+            error: '出错',
+            log: '日志 / Log',
+            thFile: '文件',
+            thId: 'Plugin ID',
+            thVer: 'Version',
+            thSince: 'since',
+            thUntil: 'until',
+            thFolder: '文件夹（目标路径）',
+            thStatus: '状态',
+            thProgress: '进度',
+            thActions: '操作',
+            remove: '移除',
+            noOverwrite: '禁止覆盖已存在的插件（推荐）',
+            show: '显示',
+            hide: '隐藏',
+            parsed: '解析:',
+            diagExists: '已存在（预检）',
+            diagAuth: '鉴权失败（401/403）',
+            diag404: '路径不存在（404）',
+            diagXml: 'plugin.xml 解析失败',
+            diagVer: '未解析到版本（unspecified）',
+            diagFail: '上传失败',
+            netErr: '网络错误',
+            useBridge: '请使用 Bridge 模式',
+            placeholderUntil: '可空 251.*',
+            placeholderAuth: 'Bearer token 或 user:pass',
+            placeholderBase: 'https://artifactory.example.com/artifactory/jetbrains-plugin-local',
+            placeholderDL: 'https://artifactory.example.com/artifactory/jetbrains-plugin-local',
+            pillOn: 'Override active',
+            pillOff: 'Defaults active'
+        }, en: {
+            title: 'Jetbrains Plugin Publisher',
+            mode: 'Mode',
+            modeBridge: 'Bridge (recommended: container handles upload, no CORS)',
+            modeDirect: 'Direct to Artifactory (CORS must allow PUT+Authorization)',
+            modeBridgeShort: 'Bridge',
+            modeDirectShort: 'Direct',
+            bridgeUrl: 'Bridge URL',
+            bridgeHint: 'Bridge mode: repo & auth can be omitted (from server/container). Enable Override on the right if you want to supply values here.',
+            repo: 'Repository & Auth',
+            override: 'Custom',
+            overrideTip: '(when OFF, inputs below are disabled and container values are used)',
+            maskText: 'Using container defaults',
+            base: 'Base URL (Artifactory repository)',
+            dl: 'Download URL Prefix (IDE download)',
+            xml: 'Feed file name',
+            authType: 'Auth type',
+            token: 'Token / user:pass',
+            remember: 'Remember token',
+            pick: 'Pick plugins (multiple or folder)',
+            pickHint: 'Tip: put all plugins into one folder and pick that folder.',
+            folderHint: 'Folder column defaults to pluginId; you can edit per row.',
+            defaults: 'Defaults:',
+            defSince: 'since-build',
+            defUntil: 'until-build',
+            applyAll: 'Apply to all',
+            start: 'Start upload',
+            clear: 'Clear table',
+            clearLog: 'Clear logs',
+            removeSelected: 'Remove selected',
+            notStarted: 'Not started',
+            working: 'Uploading…',
+            done: 'Done',
+            error: 'Error',
+            log: 'Logs',
+            thFile: 'File',
+            thId: 'Plugin ID',
+            thVer: 'Version',
+            thSince: 'since',
+            thUntil: 'until',
+            thFolder: 'Folder (target path)',
+            thStatus: 'Status',
+            thProgress: 'Progress',
+            thActions: 'Actions',
+            remove: 'Remove',
+            noOverwrite: 'Disable overwrite existed plugin (recommended)',
+            show: 'Show',
+            hide: 'Hide',
+            parsed: 'Parsed:',
+            diagExists: 'exists (preflight)',
+            diagAuth: 'auth failed (401/403)',
+            diag404: 'not found (404)',
+            diagXml: 'plugin.xml error',
+            diagVer: 'version unspecified',
+            diagFail: 'upload failed',
+            netErr: 'Network error',
+            useBridge: 'Use Bridge mode',
+            placeholderUntil: 'optional e.g. 251.*',
+            placeholderAuth: 'Bearer token or user:pass',
+            placeholderBase: 'https://artifactory.example.com/artifactory/jetbrains-plugin-local',
+            placeholderDL: 'https://artifactory.example.com/artifactory/jetbrains-plugin-local',
+            pillOn: 'Override active',
+            pillOff: 'Defaults active'
+        }
+    };
+    const $ = id => document.getElementById(id);
+    let lang = localStorage.getItem('ijpub-lang') || ((navigator.language || '').toLowerCase().startsWith('zh') ? 'zh' : 'en');
+
+    function t(k) {
+        return (i18n[lang] && i18n[lang][k]) || k
+    }
+
+    // Tooltip
+    const tooltip = $('tooltip');
+    let tipTarget = null;
+
+    function showTip(text, x, y) {
+        tooltip.textContent = text || '';
+        tooltip.style.display = 'block';
+        const margin = 14;
+        const w = Math.min(520, tooltip.offsetWidth || 520);
+        const h = tooltip.offsetHeight || 40;
+        let left = Math.min(window.innerWidth - w - 8, x + margin);
+        let top = Math.min(window.innerHeight - h - 8, y + margin);
+        tooltip.style.left = left + 'px';
+        tooltip.style.top = top + 'px';
+    }
+
+    function hideTip() {
+        tooltip.style.display = 'none';
+        tipTarget = null;
+    }
+
+    document.addEventListener('mouseover', (e) => {
+        const el = e.target.closest('.has-tip,.tip,[data-tip]');
+        if (!el) return;
+        tipTarget = el;
+        const txt = el.getAttribute('data-tip') || el.title || el.textContent || '';
+        showTip(txt, e.clientX, e.clientY);
+    });
+    document.addEventListener('mousemove', (e) => {
+        if (tipTarget) showTip(tooltip.textContent, e.clientX, e.clientY);
+    });
+    document.addEventListener('mouseout', (e) => {
+        if (tipTarget && !e.relatedTarget?.closest('.has-tip,.tip,[data-tip]')) hideTip();
+    });
+
+    // Helpers / state
+    function ts() {
+        const d = new Date(), p = n => String(n).padStart(2, '0');
+        return `[${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}]`;
+    }
+
+    const log = (...a) => {
+        $('log').textContent += `${ts()} ${a.join(' ')}\n`;
+        $('log').scrollTop = $('log').scrollHeight;
+    };
+
+    function setOverall(v) {
+        v = Math.max(0, Math.min(100, Math.round(v)));
+        $('pbarAll').style.width = v + '%';
+        $('pbarAllPct').textContent = v + '%';
+    }
+
+    let rows = [];
+
+    function statusBadge(state, tip) {
+        if (state === 'OK') return '<span class="status s-ok">OK</span>';
+        if (state === 'RUN') return '<span class="status s-running">RUN</span>';
+        if (state === 'EXISTS') return `<span class="status s-warn has-tip" data-tip="${t('diagExists')}">409</span>`;
+        if (state === 'FAIL') return `<span class="status s-fail has-tip" data-tip="${t('diagFail')}">${tip || 'FAIL'}</span>`;
+        return '<span class="status s-pending">PEND</span>';
+    }
+
+    const escAttr = s => (s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    function trHTML(r, i) {
+        const relPath = r.file?.webkitRelativePath || '';
+        return `<tr data-i="${i}">
+      <td class="td-center"><input type="checkbox" class="chk sel" ${r.sel ? 'checked' : ''}></td>
+      <td>
+        <div class="file-row"><svg class="icon file-ico"><use href="#i-file"/></svg><span class="ellipsize has-tip" data-tip="${escAttr(r.name)}">${escAttr(r.name)}</span></div>
+        <div class="text-muted ellipsize has-tip" data-tip="${escAttr(relPath)}">${escAttr(relPath)}</div>
+      </td>
+      <td><input class="input-like" value="${escAttr(r.id || '')}" data-k="id" placeholder="pluginId"></td>
+      <td><input class="input-like" value="${escAttr(r.version || '')}" data-k="version" placeholder="1.2.3"></td>
+      <td><input class="input-like" value="${escAttr(r.since || '')}" data-k="since" placeholder="241"></td>
+      <td><input class="input-like" value="${escAttr(r.until || '')}" data-k="until" placeholder="${escAttr(t('placeholderUntil'))}"></td>
+      <td><input class="input-like" value="${escAttr(r.folder || '')}" data-k="folder" placeholder="pluginId"></td>
+      <td class="st">${statusBadge(r.status || 'PEND', r.tip)}</td>
+      <td><div class="progress"><div class="bar" style="width:${r.progress || 0}%"></div><span class="pct">${Math.round(r.progress || 0)}%</span></div></td>
+      <td class="td-center"><button class="btn btn-danger btn-icon" data-action="remove" aria-label="${t('remove')}" data-tip="${t('remove')}"><svg class="icon"><use href="#i-trash"/></svg></button></td>
+    </tr>`;
+    }
+
+    function bindRowEvents() {
+        Array.from(document.querySelectorAll('#tbody input[data-k]')).forEach(inp => {
+            inp.addEventListener('input', e => {
+                const tr = e.target.closest('tr');
+                const i = +tr.dataset.i;
+                const k = e.target.dataset.k;
+                rows[i][k] = e.target.value.trim();
+            });
+        });
+        Array.from(document.querySelectorAll('#tbody input.sel')).forEach(ch => {
+            ch.addEventListener('change', e => {
+                const tr = e.target.closest('tr');
+                const i = +tr.dataset.i;
+                rows[i].sel = e.target.checked;
+            });
+        });
+        Array.from(document.querySelectorAll('#tbody [data-action=remove]')).forEach(btn => {
+            btn.addEventListener('click', e => {
+                const i = +e.target.closest('tr').dataset.i;
+                rows.splice(i, 1);
+                render();
+            });
+        });
+    }
+
+    function render() {
+        $('tbody').innerHTML = rows.map(trHTML).join('');
+        bindRowEvents();
+        $('selAll').checked = rows.length > 0 && rows.every(r => !!r.sel);
+    }
+
+    function setRowProgress(i, val) {
+        val = Math.max(0, Math.min(100, Math.round(val)));
+        rows[i].progress = val;
+        const tr = document.querySelector(`tr[data-i="${i}"]`);
+        if (tr) {
+            tr.querySelector('.bar').style.width = val + '%';
+            tr.querySelector('.pct').textContent = val + '%';
+        }
+    }
+
+    function setRowStatus(i, st, tip) {
+        rows[i].status = st;
+        rows[i].tip = tip || '';
+        const tr = document.querySelector(`tr[data-i="${i}"]`);
+        if (tr) {
+            tr.querySelector('.st').innerHTML = statusBadge(st, tip);
+        }
+    }
+
+    function deriveVersionFromFilename(name) {
+        const base = name.replace(/\.(jar|zip)$/i, '');
+        const m = base.match(/([0-9]+(?:\.[0-9A-Za-z-]+)*)$/);
+        return m ? m[1] : '';
+    }
+
+    async function parseMeta(file) {
+        try {
+            const buf = await file.arrayBuffer();
+            const zip = await JSZip.loadAsync(buf);
+            const entry = zip.file('META-INF/plugin.xml') || zip.file('plugin.xml');
+            if (!entry) return {};
+            const xml = await entry.async('string');
+            const dom = new DOMParser().parseFromString(xml, 'application/xml');
+            const q = s => (dom.querySelector(s)?.textContent || '').trim();
+            const idea = dom.querySelector('idea-version');
+            return {
+                id: q('id'),
+                name: q('name'),
+                version: q('version'),
+                since: idea?.getAttribute('since-build') || '',
+                until: idea?.getAttribute('until-build') || '',
+                description: q('description'),
+                notes: q('change-notes')
+            };
+        } catch (e) {
+            return {};
+        }
+    }
+
+    $('picker').addEventListener('change', async e => {
+        const files = Array.from(e.target.files || []);
+        if (!files.length) return;
+        const defSince = $('defaultSince').value.trim();
+        const defUntil = $('defaultUntil').value.trim();
+        for (const f of files) {
+            if (!/\.jar$|\.zip$/i.test(f.name)) continue;
+            const meta = await parseMeta(f);
+            const id = meta.id || '';
+            const version = meta.version || deriveVersionFromFilename(f.name);
+            rows.push({
+                sel: false,
+                file: f,
+                name: f.name,
+                size: f.size || 0,
+                id,
+                version,
+                since: meta.since || defSince,
+                until: meta.until || defUntil,
+                folder: id || 'unknown',
+                description: meta.description || '',
+                notes: meta.notes || '',
+                status: 'PEND',
+                progress: 0,
+                tip: ''
+            });
+            log(t('parsed'), f.name, '-> id=', id || '?', 'version=', version || '?');
+        }
+        render();
+    });
+
+    $('applyDefaults').addEventListener('click', () => {
+        const defSince = $('defaultSince').value.trim();
+        const defUntil = $('defaultUntil').value.trim();
+        rows = rows.map(r => ({...r, since: defSince || r.since, until: defUntil || r.until}));
+        render();
+    });
+    $('clearBtn').addEventListener('click', () => {
+        rows = [];
+        render();
+        setOverall(0);
+        $('log').textContent = '';
+    });
+    $('removeSelectedBtn').addEventListener('click', () => {
+        rows = rows.filter(r => !r.sel);
+        render();
+    });
+    $('clearLogBtn').addEventListener('click', () => {
+        $('log').textContent = '';
+    });
+
+    $('togglePwd').addEventListener('click', () => {
+        const f = $('authValue');
+        f.type = (f.type === 'password') ? 'text' : 'password';
+        $('togglePwd').setAttribute('data-tip', f.type === 'password' ? (t('show') + '/' + t('hide')) : (t('hide') + '/' + t('show')));
+    });
+
+    function updateAuthVisual(disable) {
+        const pill = $('authStatePill');
+        if (disable) {
+            $('repoForm').classList.add('masked');
+            $('repoCard').classList.remove('repo-on');
+            pill.classList.remove('pill-on');
+            pill.classList.add('pill-off');
+            pill.textContent = t('pillOff');
+        } else {
+            $('repoForm').classList.remove('masked');
+            $('repoCard').classList.add('repo-on');
+            pill.classList.remove('pill-off');
+            pill.classList.add('pill-on');
+            pill.textContent = t('pillOn');
+        }
+    }
+
+    function onModeChange() {
+        const isBridge = $('modeBridge').checked;
+        $('bridgeCfg').style.display = isBridge ? '' : 'none';
+        const overrideOn = $('overrideBridge').checked;
+        const disable = isBridge && !overrideOn;
+        ['baseUrl', 'downloadPrefix', 'xmlName', 'authType', 'authValue', 'rememberToken'].forEach(id => {
+            $(id).disabled = disable;
+        });
+        updateAuthVisual(disable);
+    }
+
+    $('modeBridge').addEventListener('change', onModeChange);
+    $('modeDirect').addEventListener('change', onModeChange);
+    $('overrideBridge').addEventListener('change', onModeChange);
+
+    // Networking
+    async function putWithProgress(url, file, headers, onProgress) {
+        return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('PUT', url);
+            for (const [k, v] of Object.entries(headers)) xhr.setRequestHeader(k, v);
+            xhr.upload.onprogress = e => {
+                if (e.lengthComputable && onProgress) onProgress(Math.round(e.loaded * 100 / e.total));
+            };
+            xhr.onload = () => xhr.status >= 200 && xhr.status < 300 ? resolve(xhr.responseText) : reject(new Error(`PUT ${url} -> ${xhr.status} ${xhr.statusText}`));
+            xhr.onerror = () => reject(new Error(t('netErr')));
+            xhr.send(file);
+        });
+    }
+
+    async function getText(url, headers = {}) {
+        const res = await fetch(url, {headers});
+        if (!res.ok) return null;
+        return res.text();
+    }
+
+    function upsertPlugin(doc, plugin, extra) {
+        const root = doc.getElementsByTagName('plugins')[0] || doc.appendChild(doc.createElement('plugins'));
+        let node = Array.from(doc.getElementsByTagName('plugin')).find(n => n.getAttribute('id') === plugin.id);
+        if (!node) {
+            node = doc.createElement('plugin');
+            root.appendChild(node);
+        } else {
+            while (node.firstChild) node.removeChild(node.firstChild);
+        }
+        node.setAttribute('id', plugin.id);
+        node.setAttribute('url', plugin.url);
+        node.setAttribute('version', plugin.version);
+        if (plugin.since || plugin.until) {
+            const iv = doc.createElement('idea-version');
+            if (plugin.since) iv.setAttribute('since-build', plugin.since);
+            if (plugin.until) iv.setAttribute('until-build', plugin.until);
+            node.appendChild(iv);
+        }
+        if (plugin.name) {
+            const n = doc.createElement('name');
+            n.textContent = plugin.name;
+            node.appendChild(n);
+        }
+        if (extra?.description) {
+            const d = doc.createElement('description');
+            d.textContent = extra.description;
+            node.appendChild(d);
+        }
+        if (extra?.notes) {
+            const c = doc.createElement('change-notes');
+            c.textContent = extra.notes;
+            node.appendChild(c);
+        }
+    }
+
+    function authHeader() {
+        const type = $('authType').value;
+        const v = $('authValue').value.trim();
+        if (!v) return {};
+        if (type === 'Bearer') return {'Authorization': 'Bearer ' + v};
+        if (type === 'Basic') {
+            const i = v.indexOf(':');
+            if (i < 0) {
+                alert(lang === 'zh' ? 'Basic 需要 user:pass' : 'Basic requires user:pass');
+                return {};
+            }
+            return {'Authorization': 'Basic ' + btoa(v)}
+        }
+        return {};
+    }
+
+    async function uploadDirectAll() {
+        const headers = authHeader();
+        const base = $('baseUrl').value.trim().replace(/\/+$/, '');
+        const dl = $('downloadPrefix').value.trim().replace(/\/+$/, '');
+        const xmlName = $('xmlName').value.trim() || 'updatePlugins.xml';
+        if (!base || !dl) {
+            alert('Base URL / Download Prefix required');
+            return;
+        }
+        const feedUrl = `${base}/${xmlName}`;
+        let feed = await getText(feedUrl, headers);
+        let doc = new DOMParser().parseFromString(feed || '<?xml version="1.0" encoding="UTF-8"?><plugins></plugins>', 'application/xml');
+        let done = 0;
+        for (let i = 0; i < rows.length; i++) {
+            const r = rows[i];
+            setRowStatus(i, 'RUN');
+            setRowProgress(i, 5);
+            const folder = (r.folder || r.id || 'unknown').replace(/^\/+|\/+$/g, '');
+            const binaryPath = `${folder}/${r.name}`;
+            const putUrl = `${base}/${binaryPath}`;
+            try {
+                await putWithProgress(putUrl, r.file, {'Content-Type': 'application/octet-stream', ...headers}, p => {
+                    setRowProgress(i, Math.floor(5 + p * 0.8));
+                });
+                const downloadUrl = `${dl}/${binaryPath}`;
+                upsertPlugin(doc, {
+                    id: r.id,
+                    url: downloadUrl,
+                    version: r.version,
+                    since: r.since,
+                    until: r.until,
+                    name: r.id
+                }, {description: r.description, notes: r.notes});
+                setRowStatus(i, 'OK');
+                setRowProgress(i, 100);
+            } catch (e) {
+                setRowStatus(i, 'FAIL', 'PUT');
+                log('Direct PUT failed:', r.name, e.message || e);
+            }
+            done++;
+            setOverall(Math.floor(done * 100 / rows.length));
+        }
+        if (rows.some(r => r.status === 'OK')) {
+            const newXml = new XMLSerializer().serializeToString(doc);
+            await putWithProgress(feedUrl, new Blob([newXml], {type: 'application/xml'}), {'Content-Type': 'application/xml', ...headers}, () => {
+            });
+            log('Feed updated:', feedUrl);
+        }
+    }
+
+    function classifyResult(r) {
+        if (r.code === 409) return {state: 'EXISTS', tip: '409', note: t('diagExists')};
+        const txt = (r.stderr || '') + '\n' + (r.stdout || '');
+        const low = txt.toLowerCase();
+        if (/already published/.test(low) || /already exist/.test(low)) return {
+            state: 'EXISTS',
+            tip: '409',
+            note: t('diagExists')
+        };
+        if (/unauthorized|\b401\b|\b403\b|forbidden/.test(low)) return {
+            state: 'FAIL',
+            tip: 'AUTH',
+            note: t('diagAuth')
+        };
+        if (/\b404\b|not found/.test(low)) return {state: 'FAIL', tip: '404', note: t('diag404')};
+        if (/no plugin\.xml|plugin\.xml missing/.test(low)) return {state: 'FAIL', tip: 'XML', note: t('diagXml')};
+        if (/no version found|version[ =:"]+unspecified/.test(low)) return {
+            state: 'FAIL',
+            tip: 'VERSION',
+            note: t('diagVer')
+        };
+        return {state: 'FAIL', tip: 'FAIL', note: t('diagFail')};
+    }
+
+    async function uploadBridgeAll() {
+        const fd = new FormData();
+        const base = $('baseUrl').value.trim();
+        const dl = $('downloadPrefix').value.trim();
+        const xmlName = $('xmlName').value.trim() || 'updatePlugins.xml';
+        const authV = $('authValue').value.trim();
+        const allowOverwrite = !$('noOverwrite').checked;
+
+        const meta = rows.map(r => ({
+            name: r.name,
+            pluginId: r.id,
+            pluginVersion: r.version,
+            sinceBuild: r.since,
+            untilBuild: r.until,
+            pluginName: (r.folder || r.id),
+            baseUrl: base,
+            downloadUrlPrefix: dl,
+            xmlName,
+            allowOverwrite
+        }));
+        for (let i = 0; i < rows.length; i++) {
+            fd.append('files', rows[i].file, rows[i].name);
+            setRowStatus(i, 'RUN');
+            setRowProgress(i, 5);
+        }
+        fd.append('meta', JSON.stringify(meta));
+        if (authV) {
+            fd.append('authType', $('authType').value);
+            fd.append('authValue', authV);
+        }
+
+        const sizes = rows.map(r => r.size || 0);
+        const total = sizes.reduce((a, b) => a + b, 0) || 1;
+        const acc = [];
+        let s = 0;
+        for (const z of sizes) {
+            acc.push(s);
+            s += z;
+        }
+        const url = ($('bridgeUrl').value.trim()) || (location.origin + '/upload');
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', url);
+        xhr.upload.onprogress = e => {
+            const uploaded = Math.min(e.loaded || 0, total);
+            for (let i = 0; i < rows.length; i++) {
+                const start = acc[i];
+                let frac = 0;
+                if (uploaded > start) frac = Math.min(1, Math.max(0, (uploaded - start) / (sizes[i] || 1)));
+                setRowProgress(i, 5 + frac * 80);
+            }
+            setOverall((uploaded / total) * 85);
+        };
+        xhr.onload = () => {
+            let out = {};
+            try {
+                out = JSON.parse(xhr.responseText || '{}');
+            } catch (_) {
+            }
+            if (!out || !Array.isArray(out.results)) {
+                log('Bridge', xhr.status, xhr.statusText);
+                $('overallText').textContent = t('error');
+                return;
+            }
+            let ok = 0;
+            for (const r of out.results) {
+                const idx = rows.findIndex(x => x.name === r.file);
+                if (idx < 0) continue;
+                if (r.code === 0) {
+                    setRowStatus(idx, 'OK');
+                    setRowProgress(idx, 100);
+                    ok++;
+                } else {
+                    const cls = classifyResult(r);
+                    setRowStatus(idx, cls.state, cls.tip);
+                    setRowProgress(idx, Math.max(rows[idx].progress || 0, 10));
+                    log(`[${r.file}] ${cls.note}`);
+                    if (r.stderr) log(r.stderr);
+                    if (r.stdout) log(r.stdout);
+                    log('CMD:', r.cmd, 'Exit:', r.code);
+                }
+            }
+            setOverall(100 * ok / rows.length);
+            $('overallText').textContent = t('done');
+        };
+        xhr.onerror = () => {
+            log('Bridge', t('netErr'));
+            $('overallText').textContent = t('error');
+        };
+        xhr.send(fd);
+    }
+
+    $('startBtn').addEventListener('click', async () => {
+        if (!rows.length) {
+            alert(lang === 'zh' ? '请先选择文件或目录' : 'Please pick files first');
+            return;
+        }
+        $('startBtn').disabled = true;
+        try {
+            setOverall(0);
+            $('overallText').textContent = t('working');
+            if ($('modeBridge').checked) await uploadBridgeAll(); else await uploadDirectAll();
+        } catch (e) {
+            log('ERROR:', e.message || e);
+            $('overallText').textContent = t('error');
+        } finally {
+            $('startBtn').disabled = false;
+        }
+    });
+
+    $('selAll').addEventListener('change', e => {
+        const on = e.target.checked;
+        rows = rows.map(r => ({...r, sel: on}));
+        render();
+    });
+
+    // i18n apply + placeholders
+    function applyI18n() {
+        const map = {
+            'title': 'title',
+            'sec-mode': 'mode',
+            'lab-bridge-url': 'bridgeUrl',
+            'sec-repo': 'repo',
+            'lab-override': 'override',
+            'lab-base': 'base',
+            'lab-dl': 'dl',
+            'lab-xml': 'xml',
+            'lab-auth-type': 'authType',
+            'lab-token': 'token',
+            'lab-remember': 'remember',
+            'sec-pick': 'pick',
+            'muted-defaults': 'defaults',
+            'def-since': 'defSince',
+            'def-until': 'defUntil',
+            'overallText': 'notStarted',
+            'sec-log': 'log',
+            'th-file': 'thFile',
+            'th-id': 'thId',
+            'th-ver': 'thVer',
+            'th-since': 'thSince',
+            'th-until': 'thUntil',
+            'th-folder': 'thFolder',
+            'th-status': 'thStatus',
+            'th-progress': 'thProgress',
+            'th-actions': 'thActions',
+            'lab-no-overwrite': 'noOverwrite'
+        };
+        for (const id in map) {
+            const el = $(id);
+            if (!el) continue;
+            el.textContent = t(map[id]);
+        }
+        $('mode-bridge-label').textContent = t('modeBridgeShort');
+        $('mode-direct-label').textContent = t('modeDirectShort');
+        $('tip-mode-bridge').setAttribute('data-tip', t('modeBridge'));
+        $('tip-mode-direct').setAttribute('data-tip', t('modeDirect'));
+
+        $('defaultUntil').placeholder = t('placeholderUntil');
+        $('authValue').placeholder = t('placeholderAuth');
+        $('baseUrl').placeholder = t('placeholderBase');
+        $('downloadPrefix').placeholder = t('placeholderDL');
+        $('tip-bridge-hint').setAttribute('data-tip', t('bridgeHint'));
+        $('hint-pick').setAttribute('data-tip', t('pickHint'));
+        $('hint-folder').setAttribute('data-tip', t('folderHint'));
+        $('tip-override').setAttribute('data-tip', t('overrideTip'));
+        $('repoCard').setAttribute('data-mask', t('maskText'));
+
+        // icon-only tooltips
+        $('startBtn').setAttribute('data-tip', t('start'));
+        $('removeSelectedBtn').setAttribute('data-tip', t('removeSelected'));
+        $('clearBtn').setAttribute('data-tip', t('clear'));
+        $('clearLogBtn').setAttribute('data-tip', t('clearLog'));
+        $('applyDefaults').setAttribute('data-tip', t('applyAll'));
+        $('togglePwd').setAttribute('data-tip', t('show') + '/' + t('hide'));
+
+        $('langSelect').value = lang;
+        render();
+    }
+
+    // Default Bridge URL -> placeholder (requirement #2)
+    const DEF_BRIDGE = (location.origin || 'http://localhost:9876') + '/upload';
+    $('bridgeUrl').placeholder = DEF_BRIDGE;
+
+    $('langSelect').addEventListener('change', () => {
+        lang = $('langSelect').value;
+        localStorage.setItem('ijpub-lang', lang);
+        applyI18n();
+    });
+
+    function onModeChangeInit() {
+        onModeChange();
+    }
+
+    onModeChangeInit();
+    $('langSelect').value = lang;
+    applyI18n();
+</script>
+</body>
+</html>
