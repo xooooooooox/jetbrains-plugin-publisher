@@ -1,0 +1,14 @@
+.idea
+dist
+
+.gradle
+.venv
+
+build
+
+gradle.properties
+.env
+.env.local
+.env.*.local
+
+helper

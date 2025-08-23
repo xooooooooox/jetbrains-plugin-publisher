@@ -44,7 +44,8 @@ docker run --rm --name jetbrains-plugin-publisher \
   -e PUBLISHER_DOWNLOAD_PREFIX='https://artifactory.example.com/artifactory/jetbrains-plugin-local' \
   -e PUBLISHER_REPO='artifactory' \
   -e PUBLISHER_XML_NAME='updatePlugins.xml' \
-  -v "$(pwd)":/work \
+  -v "$PWD/gradle.properties:/app/gradle.properties:ro" \
+  -v "$PWD:/work" \
   xooooooooox/jetbrains-plugin-publisher
 ```
 
@@ -68,7 +69,8 @@ services:
       PUBLISHER_REPO: ${PUBLISHER_REPO:-artifactory}
       PUBLISHER_XML_NAME: ${PUBLISHER_XML_NAME:-updatePlugins.xml}
     volumes:
-      - $(pwd):/work
+      - $PWD/gradle.properties:/app/gradle.properties
+      - $PWD:/work
     restart: unless-stopped
     healthcheck:
       test: [ "CMD-SHELL", "python3 - <<'PY'\nimport urllib.request,sys\nsys.exit(0) if urllib.request.urlopen('http://127.0.0.1:9876/status').getcode()==200 else sys.exit(1)\nPY" ]

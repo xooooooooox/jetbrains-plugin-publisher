@@ -1,0 +1,131 @@
+plugins { id 'dev.bmac.intellij.plugin-uploader' version '1.3.5' }
+
+
+import dev.bmac.gradle.intellij.PluginUploader
+import dev.bmac.gradle.intellij.UploadPluginTask
+
+import java.util.regex.Pattern
+import java.util.zip.ZipFile
+
+def cfgFiles = [
+        new File(rootDir, 'gradle.properties'),
+        new File(System.getProperty('user.home'), '.config/jpp/jpp.properties')
+]
+ext.publisherProps = new Properties()
+cfgFiles.findAll { it.isFile() }.each { f -> f.withInputStream { project.ext.publisherProps.load(it) } }
+
+String gprop(String... names) {
+    for (n in names) {
+        def v = project.findProperty(n) as String; if (v) return v
+    }; null
+}
+
+String genv(String name) { System.getenv(name) }
+
+String gfile(String... names) {
+    for (n in names) {
+        def v = project.ext.publisherProps.getProperty(n); if (v) return v
+    }; null
+}
+
+String getCfg(List g, List e = [], List f = g, String defVal = null) {
+    def v = gprop(*g as String[])
+    if (!v) for (x in e) {
+        v = genv(x); if (v) break
+    }
+    if (!v) v = gfile(*f as String[])
+    v ?: defVal
+}
+
+String needCfg(List g, List e = [], List f = g) {
+    def v = getCfg(g, e, f, null)
+    if (!v) throw new GradleException("Missing config for: ${g}")
+    v
+}
+
+def envBearer = System.getenv('ARTIFACTORY_TOKEN') ?: System.getenv('PUBLISHER_TOKEN')
+def envBasic = System.getenv('PUBLISHER_BASIC')
+if (envBearer && !project.hasProperty('publisher.token') && !project.hasProperty('token')) project.ext.set('publisher.token', envBearer)
+if (envBasic && !project.hasProperty('publisher.basic') && !project.hasProperty('basic')) project.ext.set('publisher.basic', envBasic)
+gradle.taskGraph.whenReady {
+    def src = project.hasProperty('token') || project.hasProperty('publisher.token') ? 'gradle-prop'
+            : (envBearer ? 'env' : (gfile('publisher.token') ? 'file' : 'none'))
+    logger.lifecycle("Auth source: ${src} (secret masked)")
+}
+
+class PluginMeta {
+    String id, version, since, until, name, description, notes
+}
+
+String readTextOrNull(ZipFile zip, String path) {
+    def e = zip.getEntry(path); if (e == null) return null; zip.getInputStream(e).getText('UTF-8')
+}
+
+PluginMeta parseMeta(File archive) {
+    def m = new PluginMeta()
+    new ZipFile(archive).withCloseable { zip ->
+        def xml = readTextOrNull(zip, 'META-INF/plugin.xml') ?: readTextOrNull(zip, 'plugin.xml')
+        if (xml == null) throw new GradleException("No plugin.xml found in ${archive.name}")
+        def tag = { String n -> def r = Pattern.compile("<${n}>(.*?)</${n}>", Pattern.DOTALL).matcher(xml); r.find() ? r.group(1).trim() : null }
+        def idea = (xml =~ /<idea-version[^>]*>/).with { it.find() ? it.group() : "" }
+        def since = (idea =~ /since-build="([^"]+)"/).with { it.find() ? it.group(1) : null }
+        def until = (idea =~ /until-build="([^"]+)"/).with { it.find() ? it.group(1) : null }
+        m.id = tag('id') ?: { throw new GradleException("plugin.xml missing <id>") }()
+        m.version = tag('version'); m.since = since; m.until = until
+        m.name = tag('name'); m.description = tag('description'); m.notes = tag('change-notes')
+    }
+    m
+}
+
+String deriveVersionFromFilename(File f) {
+    def base = f.name.replaceFirst(/\.(jar|zip)$/, ''); def m = (base =~ /([0-9]+(?:\.[0-9A-Za-z-]+)*)$/)
+    m.find() ? m.group(1) : null
+}
+
+tasks.named('uploadPlugin', UploadPluginTask) { UploadPluginTask t ->
+    def pluginFilePath = gprop('file')
+    if (!pluginFilePath) throw new GradleException("Provide -Pfile=/path/to/plugin.jar|zip")
+    def pluginFile = file(pluginFilePath)
+    def meta = parseMeta(pluginFile)
+
+    def repoKind = (getCfg(['repo', 'publisher.repo'], ['PUBLISHER_REPO'], ['publisher.repo'], 'artifactory') ?: 'artifactory').toLowerCase(Locale.ROOT)
+    def baseUrl = needCfg(['baseUrl', 'publisher.baseUrl'], ['PUBLISHER_BASE_URL'])
+    def downloadPrefix = needCfg(['downloadUrlPrefix', 'publisher.downloadUrlPrefix'], ['PUBLISHER_DOWNLOAD_PREFIX'])
+    def xmlName = getCfg(['xmlName', 'publisher.xmlName'], ['PUBLISHER_XML_NAME'], ['publisher.xmlName'], 'updatePlugins.xml')
+    def sinceDefault = getCfg(['sinceBuild', 'publisher.sinceBuild'], ['PUBLISHER_SINCE_BUILD'], ['publisher.sinceBuild'], '241')
+    def untilDefault = getCfg(['untilBuild', 'publisher.untilBuild'], ['PUBLISHER_UNTIL_BUILD'])
+    def defaultName = getCfg(['pluginName', 'publisher.pluginName'], ['PUBLISHER_PLUGIN_NAME'], ['publisher.pluginName'], meta.id)
+
+    url.set(baseUrl); downloadUrlPrefix.set(downloadPrefix)
+    pluginName.set(gprop('pluginName') ?: defaultName)
+    file.set(pluginFile); pluginId.set(gprop('pluginId') ?: meta.id)
+
+    def resolvedVersion = gprop('pluginVersion') ?: meta.version ?: deriveVersionFromFilename(pluginFile)
+    if (!resolvedVersion) throw new GradleException("No version found; pass -PpluginVersion=...")
+    version.set(resolvedVersion); project.version = resolvedVersion
+
+    sinceBuild.set(gprop('sinceBuild') ?: sinceDefault ?: '241')
+    def ub = gprop('untilBuild') ?: untilDefault; if (ub) untilBuild.set(ub)
+
+    if (meta.description) pluginDescription.set(meta.description)
+    if (meta.notes) changeNotes.set(meta.notes)
+    updateFile.set(xmlName)
+
+    if (repoKind in ['s3', 'minio']) {
+        repoType.set(PluginUploader.RepoType.S3)
+        def s3Auth = getCfg(['auth', 'publisher.minioAuth'], ['MINIO_AUTH', 'AWS_ACCESS_KEY_ID'])
+        if (s3Auth) authentication.set(s3Auth)
+    } else {
+        repoType.set(PluginUploader.RepoType.REST_PUT)
+        def token = getCfg(['token', 'publisher.token'], ['ARTIFACTORY_TOKEN', 'PUBLISHER_TOKEN'], ['publisher.token'])
+        if (token) authentication.set("Bearer ${token}")
+        else {
+            def basic = getCfg(['basic', 'publisher.basic'], ['PUBLISHER_BASIC'], ['publisher.basic'])
+            if (basic) {
+                def enc = Base64.encoder.encodeToString(basic.getBytes('UTF-8'))
+                authentication.set("Basic ${enc}")
+            }
+        }
+    }
+    doFirst { logger.lifecycle("Uploader -> pluginId=${pluginId.get()}, version=${version.get()}, xml=${updateFile.get()}") }
+}

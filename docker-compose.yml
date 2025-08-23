@@ -1,0 +1,43 @@
+# BuildKit usage:
+# - On modern Docker, BuildKit is the default for `docker compose build`.
+# - To force-enable explicitly:
+#     DOCKER_BUILDKIT=1 docker compose build
+#     DOCKER_BUILDKIT=1 docker compose up --build
+# - For legacy docker-compose (v1) also set:
+#     COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1 docker-compose build
+services:
+  bridge:
+    container_name: jetbrains-plugin-publisher
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BUILDKIT_INLINE_CACHE: 1
+        VERSION: "${VERSION:-dev}"
+        VCS_REF: "${VCS_REF:-unknown}"
+        BUILD_DATE: "${BUILD_DATE:-${DATE_ISO8601}}"
+    ports:
+      - "9876:9876"
+    # Optional auth for uploads; populate via environment or a .env file
+    environment:
+      ARTIFACTORY_TOKEN: ${ARTIFACTORY_TOKEN:-}
+      PUBLISHER_BASIC: ${PUBLISHER_BASIC:-}
+      PUBLISHER_BASE_URL: ${PUBLISHER_BASE_URL:-https://artifactory-oss.example.com/artifactory/jetbrains-plugin-local}
+      PUBLISHER_DOWNLOAD_URL: ${PUBLISHER_DOWNLOAD_URL:-https://artifactory-oss.example.com/artifactory/jetbrains-plugin-local}
+      PUBLISHER_REPO: ${PUBLISHER_REPO:-repository}
+      PUBLISHER_XML_NAME: ${PUBLISHER_XML_NAME:-updatePlugins.xml}
+    # Mount the project so the service can use local files and gradle wrapper
+    volumes:
+      - ./:/app:rw
+      # Persist Gradle cache between runs for faster builds
+      - gradle-cache:/root/.gradle
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request,sys; sys.exit(0) if urllib.request.urlopen('http://127.0.0.1:9876/status').getcode()==200 else sys.exit(1)\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  gradle-cache:
