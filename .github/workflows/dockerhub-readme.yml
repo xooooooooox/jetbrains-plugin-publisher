@@ -41,6 +41,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-          repository: %{{ env.DOCKERHUB_REPO }}
+          repository: ${{ env.DOCKERHUB_REPO }}
           readme-filepath: README.dockerhub.md
           short-description: ${{ github.event.repository.description || 'Bridge API + Web UI for publishing JetBrains plugins to custom repositories' }}
