@@ -36,7 +36,7 @@
 
 在本地运行 Bridge 服务并打开界面：
 
-```bash
+```shell
 docker run --rm --name jetbrains-plugin-publisher \
   -p 9876:9876 \
   -e ARTIFACTORY_TOKEN=*********** \
@@ -44,6 +44,14 @@ docker run --rm --name jetbrains-plugin-publisher \
   -e PUBLISHER_DOWNLOAD_PREFIX='https://artifactory.example.com/artifactory/jetbrains-plugin-local' \
   -e PUBLISHER_REPO='artifactory' \
   -e PUBLISHER_XML_NAME='updatePlugins.xml' \
+  -v "$PWD:/work" \
+  xooooooooox/jetbrains-plugin-publisher
+```
+**或者**
+
+```shell
+docker run --rm --name jetbrains-plugin-publisher \
+  -p 9876:9876 \
   -v "$PWD/gradle.properties:/app/gradle.properties:ro" \
   -v "$PWD:/work" \
   xooooooooox/jetbrains-plugin-publisher

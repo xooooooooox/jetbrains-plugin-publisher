@@ -37,7 +37,7 @@ Uploader engine: https://github.com/brian-mcnamara/plugin_uploader
 
 Run the Bridge service locally and open the UI:
 
-```bash
+```shell
 docker run --rm --name jetbrains-plugin-publisher \
   -p 9876:9876 \
   -e ARTIFACTORY_TOKEN=*********** \
@@ -45,6 +45,14 @@ docker run --rm --name jetbrains-plugin-publisher \
   -e PUBLISHER_DOWNLOAD_PREFIX='https://artifactory.example.com/artifactory/jetbrains-plugin-local' \
   -e PUBLISHER_REPO='artifactory' \
   -e PUBLISHER_XML_NAME='updatePlugins.xml' \
+  -v "$PWD:/work" \
+  xooooooooox/jetbrains-plugin-publisher
+```
+**OR**
+
+```shell
+docker run --rm --name jetbrains-plugin-publisher \
+  -p 9876:9876 \
   -v "$PWD/gradle.properties:/app/gradle.properties:ro" \
   -v "$PWD:/work" \
   xooooooooox/jetbrains-plugin-publisher
