@@ -1,0 +1,46 @@
+name: Update Docker Hub Overview
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - README.md
+      - README_CN.md
+      - docs/**
+      - .github/workflows/dockerhub-readme.yml
+  workflow_dispatch: { }
+
+env:
+  DOCKERHUB_REPO: xooooooooox/jetbrains-plugin-publisher
+
+jobs:
+  update-description:
+    name: Update Docker Hub README
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Prepare README for Docker Hub
+        id: prep
+        shell: bash
+        run: |
+          set -euo pipefail
+          RAW_BASE="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_REF_NAME}"
+          GH_BLOB_BASE="https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_REF_NAME}"
+          # Create a temporary README with absolute URLs for Docker Hub
+          cp README.md README.dockerhub.md
+          # Rewrite image/link paths that start with docs/ or ./docs/
+          sed -i -E "s#\((\./)?docs/#(${RAW_BASE}/docs/#g" README.dockerhub.md
+          # Rewrite links to README_CN.md and README.md to GitHub blob URLs so they work on Docker Hub
+          sed -i -E "s#\((\./)?README_CN\.md\)#(${GH_BLOB_BASE}/README_CN.md)#g" README.dockerhub.md
+          sed -i -E "s#\((\./)?README\.md\)#(${GH_BLOB_BASE}/README.md)#g" README.dockerhub.md
+
+      - name: Update Docker Hub description
+        uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: %{{ env.DOCKERHUB_REPO }}
+          readme-filepath: README.dockerhub.md
+          short-description: ${{ github.event.repository.description || 'Bridge API + Web UI for publishing JetBrains plugins to custom repositories' }}
