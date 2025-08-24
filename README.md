@@ -1,6 +1,6 @@
 # Jetbrains Plugin Publisher
 
-[![Static Badge](https://img.shields.io/badge/README-EN-blue)](./README.md) [![Static Badge](https://img.shields.io/badge/README-中-red)](./README_CN.md)
+![GitHub License](https://img.shields.io/github/license/xooooooooox/jetbrains-plugin-publisher?style=flat) [![Static Badge](https://img.shields.io/badge/README-EN-blue)](./README.md) [![Static Badge](https://img.shields.io/badge/README-中-red)](./README_CN.md) [![Docker Pulls](https://img.shields.io/docker/pulls/xooooooooox/jetbrains-plugin-publisher)](https://hub.docker.com/r/xooooooooox/jetbrains-plugin-publisher)
 
 Publish IntelliJ‑platform plugins to a **custom plugin repository** (Artifactory, MinIO/S3, etc.) with a simple web UI
 _or_ a one‑liner Gradle task.  

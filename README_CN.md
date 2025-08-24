@@ -1,6 +1,6 @@
 # JetBrains 插件发布器（JetBrains Plugin Publisher）
 
-[![Static Badge](https://img.shields.io/badge/README-EN-blue)](./README.md) [![Static Badge](https://img.shields.io/badge/README-中-red)](./README_CN.md)
+![GitHub License](https://img.shields.io/github/license/xooooooooox/jetbrains-plugin-publisher?style=flat) [![Static Badge](https://img.shields.io/badge/README-EN-blue)](./README.md) [![Static Badge](https://img.shields.io/badge/README-中-red)](./README_CN.md) [![Docker Pulls](https://img.shields.io/docker/pulls/xooooooooox/jetbrains-plugin-publisher)](https://hub.docker.com/r/xooooooooox/jetbrains-plugin-publisher)
 
 通过简单的网页界面或一行 Gradle 任务，将 IntelliJ 平台插件发布到**自定义插件仓库**（Artifactory、MinIO/S3 等）。
 无需手动编辑 `updatePlugins.xml` —— 系统会自动生成/更新。
