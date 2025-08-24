@@ -166,9 +166,14 @@ the [plugin_uploader](https://github.com/brian-mcnamara/plugin_uploader) engine.
 # Enter the running container (or run these in a dev shell):
 docker exec -it jetbrains-plugin-publisher bash
 
-# Upload a single plugin archive (.jar or .zip):
+# Upload a single plugin archive (.jar or .zip)
+# Option1:
 gradle -q uploadPlugin \
-  -Pfile=/app/incoming/your-plugin-1.2.3.jar \
+  -Pfile=/work/your-plugin-1.2.3.jar \
+
+# Option2:
+gradle -q uploadPlugin \
+  -Pfile=/work/your-plugin-1.2.3.jar \
   -PpluginId=com.yourco.yourplugin \
   -PpluginVersion=1.2.3 \
   -PsinceBuild=241 \

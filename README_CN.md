@@ -161,8 +161,13 @@ publisher.xmlName=updatePlugins.xml
 docker exec -it jetbrains-plugin-publisher bash
 
 # 上传单个插件存档（.jar 或 .zip）：
+# 最简命令:
 gradle -q uploadPlugin \
-  -Pfile=/app/incoming/your-plugin-1.2.3.jar \
+  -Pfile=/work/your-plugin-1.2.3.jar \
+
+# 完整命令:
+gradle -q uploadPlugin \
+  -Pfile=/work/your-plugin-1.2.3.jar \
   -PpluginId=com.yourco.yourplugin \
   -PpluginVersion=1.2.3 \
   -PsinceBuild=241 \
