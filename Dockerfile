@@ -23,21 +23,18 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
+COPY build.gradle settings.gradle ./
+RUN --mount=type=cache,target=/home/gradle/.gradle/caches \
+    --mount=type=cache,target=/home/gradle/.gradle/wrapper \
+    gradle --no-daemon -g /home/gradle/.gradle help || true
+
 USER root
-RUN --mount=type=cache,target=/var/cache/apt \
-    --mount=type=cache,target=/var/lib/apt \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update \
  && apt-get install -y --no-install-recommends ca-certificates python3 python3-pip \
  && pip3 install --no-cache-dir flask \
  && rm -rf /var/lib/apt/lists/*
-
-COPY build.gradle settings.gradle ./
-
-USER gradle
-RUN --mount=type=cache,target=/home/gradle/.gradle/caches \
-    --mount=type=cache,target=/home/gradle/.gradle/wrapper \
-    gradle --no-daemon -g /home/gradle/.gradle help || true
-USER root
 
 COPY bridge.py .
 COPY web ./web

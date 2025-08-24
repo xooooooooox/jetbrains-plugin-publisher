@@ -6,7 +6,7 @@
 # - For legacy docker-compose (v1) also set:
 #     COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1 docker-compose build
 services:
-  bridge:
+  jpp:
     container_name: jetbrains-plugin-publisher
     build:
       context: .
@@ -15,7 +15,8 @@ services:
         BUILDKIT_INLINE_CACHE: 1
         VERSION: "${VERSION:-dev}"
         VCS_REF: "${VCS_REF:-unknown}"
-        BUILD_DATE: "${BUILD_DATE:-${DATE_ISO8601}}"
+        # date format: ${DATE_ISO8601}
+        BUILD_DATE: "${BUILD_DATE:-unknown}"
     ports:
       - "9876:9876"
     # Optional auth for uploads; populate via environment or a .env file

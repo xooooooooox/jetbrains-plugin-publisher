@@ -1,28 +1,4 @@
 **
-# VCS
-.git
-.gitignore
-
-# IDE
-.idea
-*.iml
-
-# Build outputs and caches
-.gradle
-build
-out
-dist
-tmp
-.cache
-.gradle-cache
-
-# Python artifacts
-__pycache__
-*.pyc
-
-# Node modules (if present)
-node_modules
-helper
 
 !gradlew
 !gradlew.bat
