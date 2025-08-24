@@ -63,29 +63,36 @@ docker run --rm --name jetbrains-plugin-publisher \
 
 ```yaml
 services:
-  bridge:
+  jpp:
     container_name: jetbrains-plugin-publisher
     image: xooooooooox/jetbrains-plugin-publisher
     ports: [ "9876:9876" ]
     environment:
       # 上传的可选认证；提供以下其中一种：
-      ARTIFACTORY_TOKEN: ${ARTIFACTORY_TOKEN:-}      # Bearer 令牌
-      PUBLISHER_BASIC: ${PUBLISHER_BASIC:-}          # user:pass（少见）
-      # 仓库目标
+      ARTIFACTORY_TOKEN: ${ARTIFACTORY_TOKEN:-}      # Bearer token
+      PUBLISHER_BASIC: ${PUBLISHER_BASIC:-}          # user:pass (rare)
+      # Repository targets
       PUBLISHER_BASE_URL: ${PUBLISHER_BASE_URL:-https://artifactory-oss.example.com/artifactory/jetbrains-plugin-local}
       PUBLISHER_DOWNLOAD_PREFIX: ${PUBLISHER_DOWNLOAD_PREFIX:-https://artifactory-oss.example.com/artifactory/jetbrains-plugin-local}
       PUBLISHER_REPO: ${PUBLISHER_REPO:-artifactory}
       PUBLISHER_XML_NAME: ${PUBLISHER_XML_NAME:-updatePlugins.xml}
     volumes:
+      - $PWD:/work
+    restart: unless-stopped
+```
+
+**或者**
+
+```yaml
+services:
+  jpp:
+    container_name: jetbrains-plugin-publisher
+    image: xooooooooox/jetbrains-plugin-publisher
+    ports: [ "9876:9876" ]
+    volumes:
       - $PWD/gradle.properties:/app/gradle.properties
       - $PWD:/work
     restart: unless-stopped
-    healthcheck:
-      test: [ "CMD-SHELL", "python3 - <<'PY'\nimport urllib.request,sys\nsys.exit(0) if urllib.request.urlopen('http://127.0.0.1:9876/status').getcode()==200 else sys.exit(1)\nPY" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
 ```
 
 > **为什么需要 `PUBLISHER_DOWNLOAD_PREFIX`？**  

@@ -78,15 +78,22 @@ services:
       PUBLISHER_REPO: ${PUBLISHER_REPO:-artifactory}
       PUBLISHER_XML_NAME: ${PUBLISHER_XML_NAME:-updatePlugins.xml}
     volumes:
+      - $PWD:/work
+    restart: unless-stopped
+```
+
+**OR**
+
+```yaml
+services:
+  jpp:
+    container_name: jetbrains-plugin-publisher
+    image: xooooooooox/jetbrains-plugin-publisher
+    ports: [ "9876:9876" ]
+    volumes:
       - $PWD/gradle.properties:/app/gradle.properties
       - $PWD:/work
     restart: unless-stopped
-    healthcheck:
-      test: [ "CMD-SHELL", "python3 - <<'PY'\nimport urllib.request,sys\nsys.exit(0) if urllib.request.urlopen('http://127.0.0.1:9876/status').getcode()==200 else sys.exit(1)\nPY" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
 ```
 
 > **Why `PUBLISHER_DOWNLOAD_PREFIX`?**  
