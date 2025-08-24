@@ -79,9 +79,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
-
-volumes:
-  gradle-cache:
 ```
 
 > **Why `PUBLISHER_DOWNLOAD_PREFIX`?**  
